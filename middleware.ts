@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { authMiddleware, clerkClient } from "@clerk/nextjs/server";
+=======
+import { createAuthMiddleware, clerkClient } from "@clerk/nextjs/server";
+>>>>>>> 994ede71d9f2a9f2724bd18e7a37395329bd9088
 import { NextResponse } from "next/server";
 
 const publicRoutes = ["/", "/api/webhook/register", "/sign-in", "/sign-up"];
@@ -6,9 +10,17 @@ const publicRoutes = ["/", "/api/webhook/register", "/sign-in", "/sign-up"];
 /**
  * @deprecated Use `newFunction()` instead.
  */
+<<<<<<< HEAD
 export default authMiddleware({
   publicRoutes,
   async afterAuth(auth: { userId: any }, req: { nextUrl: { pathname: string }; url: string | URL | undefined }) {
+=======
+export default createAuthMiddleware({
+  publicRoutes,
+
+  async afterAuth(auth: { userId: any; }, req: { nextUrl: { pathname: string; }; url: string | URL | undefined; }) {
+    // Use 'auth' for authentication details and 'req' for NextRequest
+>>>>>>> 994ede71d9f2a9f2724bd18e7a37395329bd9088
     // Handle unauthenticated users trying to access protected routes
     if (!auth.userId && !publicRoutes.includes(req.nextUrl.pathname)) {
       return NextResponse.redirect(new URL("/sign-in", req.url));
@@ -16,7 +28,13 @@ export default authMiddleware({
 
     if (auth.userId) {
       try {
+<<<<<<< HEAD
         const user = await clerkClient.users.getUser(auth.userId); // Fetch user data from Clerk
+=======
+        const clerk = await clerkClient();
+
+        const user = await clerk.users.getUser(auth.userId); // Fetch user data from Clerk
+>>>>>>> 994ede71d9f2a9f2724bd18e7a37395329bd9088
         const role = user.publicMetadata.role as string | undefined;
 
         // Admin role redirection logic
@@ -32,7 +50,14 @@ export default authMiddleware({
         // Redirect authenticated users trying to access public routes
         if (publicRoutes.includes(req.nextUrl.pathname)) {
           return NextResponse.redirect(
+<<<<<<< HEAD
             new URL(role === "admin" ? "/admin/dashboard" : "/dashboard", req.url)
+=======
+            new URL(
+              role === "admin" ? "/admin/dashboard" : "/dashboard",
+              req.url
+            )
+>>>>>>> 994ede71d9f2a9f2724bd18e7a37395329bd9088
           );
         }
       } catch (error) {
@@ -45,4 +70,8 @@ export default authMiddleware({
 
 export const config = {
   matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> 994ede71d9f2a9f2724bd18e7a37395329bd9088
