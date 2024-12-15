@@ -11,10 +11,10 @@ const globalForPrisma = globalThis as unknown as {
 
 type prismaClientSingltion = ReturnType<typeof prismaClientSingltion>
 
-const primsa = globalForPrisma.prisma ?? prismaClientSingltion()
+const prisma= globalForPrisma.prisma ?? prismaClientSingltion()
 
-export default primsa
+export default prisma
 
 if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = primsa
+    globalForPrisma.prisma = prisma
 }
