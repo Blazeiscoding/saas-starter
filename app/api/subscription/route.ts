@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextResponse } from "next/server";
-import {auth} from "@clerk/nextjs";
+import {auth} from "@clerk/nextjs/server";
 import primsa from "@/lib/prisma";
 import prisma from "@/lib/prisma";
 
 export async function POST(req: Request) { 
-    const {userId} = auth();
+    const {userId} = await auth();
 
     if(!userId){
         return NextResponse.json({error: "Unauthorized"}, {status: 401});
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
 
 
 export async function GET(){
-    const {userId} = auth();
+    const {userId} = await auth();
 
     if(!userId){
         return NextResponse.json({error: "Unauthorized"}, {status: 401});
