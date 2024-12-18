@@ -6,7 +6,8 @@ import prisma from "@/lib/prisma";
 const ITEMS_PER_PAGE = 10;
 
 async function isAdmin(userId: string) {
-  const user = await clerkClient.users.getUser(userId);
+  const response = await clerkClient()
+  const user = await response.users.getUser(userId);
   return user.publicMetadata.role === "admin";
 }
 
