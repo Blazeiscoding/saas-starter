@@ -114,7 +114,7 @@ export default function SignIn() {
               href="/sign-up"
               className="font-medium text-primary hover:underline"
             >
-              Sign In
+              Sign Up
             </Link>
           </p>
         </CardFooter>
