@@ -1,5 +1,5 @@
 "use client";
-
+/*eslint-disable @typescript-eslint/no-unused-vars*/
 import { useToast } from "@/hooks/use-toast";
 import { useCallback, useEffect, useState } from "react";
 import { TodoItem } from "@/components/TodoItem";
