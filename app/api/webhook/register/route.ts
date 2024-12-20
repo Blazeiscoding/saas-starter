@@ -7,9 +7,8 @@ export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET;
 
   if (!WEBHOOK_SECRET) {
-    throw new Error(
-      "Please add WEBHOOK_SECRET from Clerk Dashboard to .env or .env.local"
-    );
+    console.error("WEBHOOK_SECRET is missing in environment variables");
+    return new Response("Server misconfiguration", { status: 500 });
   }
 
   const headerPayload = await headers();
@@ -18,67 +17,69 @@ export async function POST(req: Request) {
   const svix_signature = headerPayload.get("svix-signature");
 
   if (!svix_id || !svix_timestamp || !svix_signature) {
-    return new Response("Error occurred -- no svix headers", {
-      status: 400,
-    });
+    return new Response("Missing Svix headers", { status: 400 });
   }
 
-  const payload = await req.json();
+  let payload: any;
+  try {
+    payload = await req.json();
+  } catch (err) {
+    console.error("Failed to parse JSON payload:", err);
+    return new Response("Invalid JSON payload", { status: 400 });
+  }
+
   const body = JSON.stringify(payload);
 
-  const wh = new Webhook(WEBHOOK_SECRET);
-  let evt: WebhookEvent;
+  const webhook = new Webhook(WEBHOOK_SECRET);
+  let event: WebhookEvent;
 
   try {
-    evt = wh.verify(body, {
+    event = webhook.verify(body, {
       "svix-id": svix_id,
       "svix-timestamp": svix_timestamp,
       "svix-signature": svix_signature,
     }) as WebhookEvent;
   } catch (err) {
-    console.error("Error verifying webhook:", err);
-    return new Response("Error occurred", {
-      status: 400,
-    });
+    console.error("Webhook verification failed:", err);
+    return new Response("Invalid webhook signature", { status: 400 });
   }
 
-  const { id } = evt.data;
-  const eventType = evt.type;
+  const { type, data } = event;
+  
+  console.log("Event data:", data);
 
-  console.log(`Webhook with an ID of ${id} and type of ${eventType}`);
-  console.log("Webhook body:", body);
-
-  // Handling 'user.created' event
-  if (eventType === "user.created") {
+  if (type === "user.created") {
     try {
-      const { email_addresses, primary_email_address_id } = evt.data;
-      console.log(evt.data);
-      // Safely find the primary email address
+      const { email_addresses, primary_email_address_id } = data;
+
+      if (!email_addresses || email_addresses.length === 0) {
+        console.error("No email addresses found in event data");
+        return new Response("No email addresses found", { status: 400 });
+      }
+
       const primaryEmail = email_addresses.find(
         (email) => email.id === primary_email_address_id
       );
-      console.log("Primary email:", primaryEmail);
-      console.log("Email addresses:", primaryEmail?.email_address);
 
-      if (!primaryEmail) {
-        console.error("No primary email found");
-        return new Response("No primary email found", { status: 400 });
+      if (!primaryEmail || !primaryEmail.email_address) {
+        console.error("Primary email address not found in event data");
+        return new Response("Primary email address missing", { status: 400 });
       }
 
-      // Create the user in the database
       const newUser = await prisma.user.create({
         data: {
-          id: evt.data.id!,
+          id: data.id,
           email: primaryEmail.email_address,
-          isSubscribed: false, // Default setting
+          isSubscribed: false,
         },
       });
-      console.log("New user created:", newUser);
-    } catch (error) {
-      console.error("Error creating user in database:", error);
-      return new Response("Error creating user", { status: 500 });
+
+      console.log("User successfully created:", newUser);
+    } catch (err) {
+      console.error("Error saving user to database:", err);
+      return new Response("Database error", { status: 500 });
     }
   }
 
-  return new Response("Webhook received successfully", { status: 200 });
+  return new Response("Webhook processed successfully", { status: 200 });
 }
